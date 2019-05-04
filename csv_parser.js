@@ -6,6 +6,7 @@ class CSVParser {
     this.data = [];
     this.row = [];
     this.value = '';
+    this.open = false;
   }
 
   read(path) {
@@ -23,30 +24,29 @@ class CSVParser {
 
     for (let i = 0; i < chunk.length; i++) {
       if (chunk[i] == '"') {
-        if (chunk[i + 1]) {
+        if (!this.open && this.value == '') {
+          this.open = true;
+        } else if (this.open && (chunk[i + 1] == ',' || chunk[i + 1] == '\n')) {
+          this.open = false;
+        } else if (chunk[i + 1]) {
           this.value += chunk[i + 1];
           i += 1;
         }
-
-        continue;
-      }
-
-      if (chunk[i] == ',') {
+      } else if (chunk[i] == ',') {
+        if (!this.open) {
+          this.row.push(this.value);
+          this.value = '';
+        } else {
+          this.value += chunk[i];
+        }
+      } else if (chunk[i] == '\n') {
         this.row.push(this.value);
-        this.value = '';
-
-        continue;
-      }
-
-      if (chunk[i] == '\n') {
         this.data.push(this.row);
         this.row = [];
         this.value = '';
-
-        continue;
+      } else {
+        this.value += chunk[i];
       }
-
-      this.value += chunk[i];
     }
   }
 
